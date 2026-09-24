@@ -1,0 +1,5 @@
+[wrap-git]
+url = https://github.com/theory/pgtap.git
+revision = v1.3.4
+depth = 1
+patch_directory = pgtap
