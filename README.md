@@ -2,12 +2,8 @@
 
 ## Project Tools
 
-* pg\_prove 
-  Perl package TAP::Parser::SourceHandler::pgTAP
-  https://github.com/theory/tap-parser-sourcehandler-pgtap
-* pgtap 
-  http://pgtap.org/
-* lit  
-  https://github.com/cdosborn/lit
+* [meson](https://mesonbuild.com)
+* [pgtap](http://pgtap.org/) (Already a subproject)
+* [lit](https://github.com/cdosborn/lit)
 
 

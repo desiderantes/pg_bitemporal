@@ -19,7 +19,7 @@ of expression between two time periods.
 
 
 The user functions are defined below. They are group in a way that makes
-explaination easier. 
+explanation easier.
     
       << high level functions >>=
       << simple functions >>
@@ -105,7 +105,7 @@ The order of the arguments is unimportant to these relationship.
 is\_during implements [during] and is\_contained\_in implements [during^-1].
 The function names are meant to match how the relationship reads in english.
 
-The function has\_during implments the alternative of either argument is during
+The function has\_during implements the alternative of either argument is during
 the other. This is effective [during] or [during^-1].
 It is unclear if this function would be needed.
 
@@ -153,7 +153,7 @@ It is unclear if this function would be needed.
 ### Overlaps
 
 Implementing [Overlaps] and [Overlaps^-1] is confusing. 
-is\_overlaps implments the relationships based on the order of the arguments.
+is\_overlaps implements the relationships based on the order of the arguments.
 But as an english description there is no real inverse as a can overlap b or b
 overlaps a. has\_overlaps implements both cases of overlap.
 
@@ -242,7 +242,7 @@ other without regard to which.
 
 ### Meets
 
-Meets is implemeted similarlly to overlaps. There is no english words to
+Meets is implemented similarly to overlaps. There is no english words to
 handle the inverse case. is\_meets can be used for [meets] or [meets^-1]
 depending on the order of arguments. has\_meets implements the order agnostic
 case of whether two time periods meet in either way. 
@@ -297,7 +297,7 @@ Encloses is [During], [During^-1] and the AlignsWith group.
 AlignsWith is [Starts],[Starts^-1], [Finishes], and [Finishes^-1].
 
 All the functions uses the _has_ prefix to denote they are agnostic to the
-order of arguements.
+order of arguments.
 
 
       << partition functions >>=

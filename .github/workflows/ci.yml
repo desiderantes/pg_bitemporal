@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: PostgreSQL ${{ matrix.pg_version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pg_version: ['12', '13', '14', '15', '16', '17', '18']
+
+    services:
+      postgres:
+        image: postgres:${{ matrix.pg_version }}
+        env:
+          POSTGRES_USER: ubuntu
+          POSTGRES_PASSWORD: f0285cb79f623675a3df3fe88a014d80a7276e55
+          POSTGRES_DB: ci_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      CI: "true"
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: ubuntu
+      PGPASSWORD: f0285cb79f623675a3df3fe88a014d80a7276e55
+      PGDATABASE: ci_test
+      POSTGRES_VERSION: ${{ matrix.pg_version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure PostgreSQL credentials
+        run: |
+          echo "*:*:*:ubuntu:f0285cb79f623675a3df3fe88a014d80a7276e55" > ~/.pgpass
+          chmod 600 ~/.pgpass
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client meson ninja-build ghc cabal-install
+
+      - name: Install cdosborn/lit
+        run: |
+          if [ ! -f ~/.cabal/bin/lit ]; then
+            mkdir -p ~/.cabal/packages/hackage.haskell.org
+            curl -f -L https://hackage.haskell.org/root.json -o ~/.cabal/packages/hackage.haskell.org/root.json || true
+            cabal update || cabal v2-update || true
+            cabal install lit --allow-newer --overwrite-policy=always
+          fi
+          echo "$HOME/.cabal/bin" >> $GITHUB_PATH
+
+      - name: Setup Meson
+        run: |
+          meson setup buildDir \
+            -Dpghost=localhost \
+            -Dpgport=5432 \
+            -Dpguser=ubuntu \
+            -Dpgdatabase=ci_test \
+            -Dpgversion=${{ matrix.pg_version }}
+
+      - name: Load Database via Meson
+        run: |
+          meson compile -C buildDir load
+          meson compile -C buildDir load_pgtap
+
+      - name: Run Tests via Meson
+        run: |
+          meson test -C buildDir --verbose

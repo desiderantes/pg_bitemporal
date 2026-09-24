@@ -1,0 +1,5 @@
+option('pgdatabase', type : 'string', value : 'bitemporal', description : 'PostgreSQL database name')
+option('pghost', type : 'string', value : 'localhost', description : 'PostgreSQL host')
+option('pgport', type : 'string', value : '5432', description : 'PostgreSQL port')
+option('pguser', type : 'string', value : 'ubuntu', description : 'PostgreSQL user')
+option('pgversion', type : 'combo', choices : ['12', '13', '14', '15', '16', '17', '18'], value : '18', description : 'PostgreSQL version')
