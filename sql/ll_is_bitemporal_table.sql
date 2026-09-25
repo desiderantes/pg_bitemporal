@@ -1,3 +1,12 @@
+/**
+ * @file ll_is_bitemporal_table.sql
+ * @ingroup bitemporal_schema
+ * @brief Checks whether a table is a valid bitemporal table.
+ * @param[in] p_table text Qualified table name (`<schema>.<table_name>`).
+ * @retval true Table contains `effective`, `asserted`, `row_created_at` attributes and active GIST exclusion index.
+ * @retval false Table lacks bitemporal attributes or required GIST exclusion index.
+ * @sa ll_create_bitemporal_table
+ */
 CREATE OR REPLACE FUNCTION bitemporal_internal.ll_is_bitemporal_table(p_table text) RETURNS boolean   immutable
 AS
  $$

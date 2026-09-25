@@ -4,6 +4,6 @@
 
 * [meson](https://mesonbuild.com)
 * [pgtap](http://pgtap.org/) (Already a subproject)
-* [lit](https://github.com/cdosborn/lit)
+* [Doxygen](https://www.doxygen.nl)
 
 

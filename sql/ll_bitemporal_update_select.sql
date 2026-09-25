@@ -1,3 +1,20 @@
+/**
+ * @file ll_bitemporal_update_select.sql
+ * @ingroup bitemporal_dml
+ * @brief Performs bitemporal update where values and search conditions are supplied by SELECT subqueries (qualified table signature).
+ * @param[in] p_table text Bitemporal table name (`<schema>.<table_name>`).
+ * @param[in] p_list_of_fields text Comma-separated column names to update.
+ * @param[in] p_values_selected_update text SELECT query string providing updated values.
+ * @param[in] p_search_fields text Comma-separated list of search columns in WHERE clause.
+ * @param[in] p_values_selected_search text SELECT query string supplying search criteria.
+ * @param[in] p_effective temporal_relationships.timeperiod Effective range of the update.
+ * @param[in] p_asserted temporal_relationships.timeperiod Assertion range for the update.
+ * @return integer Count of updated records.
+ * @pre Target table must be a valid bitemporal table.
+ * @post Updates target records using subquery dataset.
+ * @throws EXCEPTION 'Asserted interval starts in the past or has a finite end' if `p_asserted` bounds are invalid.
+ * @sa ll_bitemporal_update
+ */
 CREATE OR REPLACE FUNCTION bitemporal_internal.ll_bitemporal_update_select(p_table text
 ,p_list_of_fields text -- fields to update
 ,p_values_selected_update TEXT  -- values to update with
@@ -114,6 +131,34 @@ RETURN v_rowcount;
 END;    
 $BODY$ LANGUAGE plpgsql;
 
+/**
+ * @ingroup bitemporal_dml
+ * @brief Performs bitemporal update where values and search conditions are supplied by SELECT subqueries (separate schema and table signature).
+ * @param[in] p_schema_name text Name of the schema.
+ * @param[in] p_table_name text Name of the bitemporal table.
+ * @param[in] p_list_of_fields text Comma-separated list of columns to update.
+ * @param[in] p_values_selected_update text SELECT query string providing updated values.
+ * @param[in] p_search_fields text Comma-separated list of search columns in WHERE clause.
+ * @param[in] p_values_selected_search text SELECT query string supplying search criteria.
+ * @param[in] p_effective temporal_relationships.timeperiod Effective range of the update.
+ * @param[in] p_asserted temporal_relationships.timeperiod Assertion range for the update.
+ * @return integer Count of updated records.
+ * @pre Target table must be a valid bitemporal table.
+ * @post Updates target records using subquery dataset.
+ * @throws EXCEPTION 'Asserted interval starts in the past or has a finite end' if `p_asserted` bounds are invalid.
+ * @sa ll_bitemporal_update
+ * @example
+ * SELECT * FROM bitemporal_internal.ll_bitemporal_update_select(
+ *     'bitemp_tables',
+ *     'devices',
+ *     'device_descr',
+ *     $$SELECT device_descr FROM regular_tables.new_devices d WHERE device_id=t.device_id$$,
+ *     'device_id',
+ *     $$SELECT device_id FROM regular_tables.new_devices$$,
+ *     temporal_relationships.timeperiod(now(), infinity),
+ *     temporal_relationships.timeperiod(now(), infinity)
+ * );
+ */
 CREATE OR REPLACE FUNCTION bitemporal_internal.ll_bitemporal_update_select(p_schema_name text,
  p_table_name  text
 ,p_list_of_fields text -- fields to update
@@ -229,6 +274,3 @@ GET DIAGNOSTICS v_rowcount:=ROW_COUNT;
 RETURN v_rowcount;
 END;    
 $BODY$ LANGUAGE plpgsql;
-
-
-

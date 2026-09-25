@@ -1,4 +1,24 @@
-
+/**
+ * @file ll_create_bitemporal_table.sql
+ * @ingroup bitemporal_schema
+ * @brief Creates a bitemporal table equipped with effective and asserted temporal ranges and GIST exclusion constraints.
+ * @param[in] p_schema text The schema name where the bitemporal table will be created.
+ * @param[in] p_table text The table name.
+ * @param[in] p_table_definition text Column definitions for business attributes (e.g., 'device_id integer, device_descr text').
+ * @param[in] p_business_key text Natural business key column(s) (comma-separated if composite).
+ * @retval true Table created successfully with primary key and GIST exclusion constraint.
+ * @retval false Table creation failed (error diagnostic logged via RAISE NOTICE).
+ * @pre Target schema must exist.
+ * @post Creates physical table containing surrogate PK `<table_name>_key`, attributes, `effective`, `asserted`, `row_created_at`, and exclusion constraint `<table_name>_<business_key>_assert_eff_excl`.
+ * @sa ll_is_bitemporal_table, ll_generate_bitemp_for_schema
+ * @example
+ * SELECT * FROM bitemporal_internal.ll_create_bitemporal_table(
+ *     'bitemp_tables',
+ *     'devices',
+ *     'device_id integer, device_descr text',
+ *     'device_id'
+ * );
+ */
 CREATE OR REPLACE FUNCTION bitemporal_internal.ll_create_bitemporal_table(
     p_schema text,
     p_table text,

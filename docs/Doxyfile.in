@@ -1,0 +1,12 @@
+PROJECT_NAME           = @PROJECT_NAME@
+PROJECT_NUMBER         = @PROJECT_VERSION@
+OUTPUT_DIRECTORY       = @OUTPUT_DIR@
+INPUT                  = @INPUT_DIR@
+FILE_PATTERNS          = *.sql
+RECURSIVE              = YES
+FILTER_PATTERNS        = *.sql=@SQL_FILTER@
+EXTENSION_MAPPING      = sql=C
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_XML           = YES
+QUIET                  = YES

@@ -1,3 +1,34 @@
+/**
+ * @file ll_bitemporal_update.sql
+ * @ingroup bitemporal_dml
+ * @brief Performs a bitemporal update operation, closing existing system assertion periods and creating updated effective history.
+ * @param[in] p_schema_name text Schema name containing the bitemporal table.
+ * @param[in] p_table_name text Target table name.
+ * @param[in] p_list_of_fields text Comma-separated column names to update.
+ * @param[in] p_list_of_values text Comma-separated literal values for updated columns.
+ * @param[in] p_search_fields text Comma-separated list of search columns in WHERE clause.
+ * @param[in] p_search_values text Comma-separated literal search values.
+ * @param[in] p_effective temporal_relationships.timeperiod Business effective range of the update.
+ * @param[in] p_asserted temporal_relationships.timeperiod System assertion range for the update.
+ * @return integer Count of updated records.
+ * @pre Target table must be a valid bitemporal table.
+ * @post Closes assertion period on matching active records and inserts new assertion version with updated effective ranges and attribute values.
+ * @throws EXCEPTION 'Asserted interval starts in the past or has a finite end' if `p_asserted` lower bound is before current date or upper bound is finite.
+ * @throws EXCEPTION 'Empty list of fields for a table' if table metadata lookup fails.
+ * @warning Update vs Correction: `ll_bitemporal_update` creates new temporal versions. To correct errant data without versioning history, use `ll_bitemporal_correction`.
+ * @sa ll_bitemporal_update_select, ll_bitemporal_correction
+ * @example
+ * SELECT * FROM bitemporal_internal.ll_bitemporal_update(
+ *     'bitemp_tables',
+ *     'devices',
+ *     'device_descr',
+ *     $$'descr starting from jan 1'$$,
+ *     'device_id',
+ *     $$1$$,
+ *     '[2020-01-01, infinity)',
+ *     '[now(), infinity)'
+ * );
+ */
 CREATE OR REPLACE FUNCTION bitemporal_internal.ll_bitemporal_update(p_schema_name text
 ,p_table_name text
 ,p_list_of_fields text -- fields to update
@@ -112,4 +143,3 @@ GET DIAGNOSTICS v_rowcount:=ROW_COUNT;
 RETURN v_rowcount;
 END;    
 $BODY$ LANGUAGE plpgsql;
-

@@ -1,5 +1,21 @@
- CREATE OR REPLACE FUNCTION bitemporal_internal.ll_bitemporal_inactivate(p_schema_name text,
-  p_table_name text
+/**
+ * @file ll_bitemporal_inactivate.sql
+ * @ingroup bitemporal_dml
+ * @brief Inactivates a bitemporal record starting from specified effective interval.
+ * @param[in] p_schema_name text Name of the schema.
+ * @param[in] p_table_name text Name of the bitemporal table.
+ * @param[in] p_search_fields text Comma-separated search columns for WHERE clause.
+ * @param[in] p_search_values text Comma-separated search values.
+ * @param[in] p_effective temporal_relationships.timeperiod Effective range when record becomes inactive.
+ * @param[in] p_asserted temporal_relationships.timeperiod Assertion range for inactivation.
+ * @return integer Count of inactivated records.
+ * @pre Target table must be bitemporal.
+ * @post Closes effective availability interval of matching records starting from `p_effective`.
+ * @throws EXCEPTION 'Asserted interval starts in the past or has a finite end' if `p_asserted` bounds are invalid.
+ * @sa ll_bitemporal_delete, ll_bitemporal_update
+ */
+CREATE OR REPLACE FUNCTION bitemporal_internal.ll_bitemporal_inactivate(p_schema_name text,
+ p_table_name text
 , p_search_fields TEXT  -- search fields
 , p_search_values TEXT  --  search values
 , p_effective temporal_relationships.timeperiod -- inactive starting
@@ -95,5 +111,3 @@ GET DIAGNOSTICS v_rowcount:=ROW_COUNT;
 RETURN v_rowcount;
 END;
 $BODY$ LANGUAGE plpgsql;
-
-
