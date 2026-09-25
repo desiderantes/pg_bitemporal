@@ -52,21 +52,11 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y postgresql-client meson ninja-build ghc cabal-install
-
-      - name: Install cdosborn/lit
-        run: |
-          if [ ! -f ~/.cabal/bin/lit ]; then
-            mkdir -p ~/.cabal/packages/hackage.haskell.org
-            curl -f -L https://hackage.haskell.org/root.json -o ~/.cabal/packages/hackage.haskell.org/root.json || true
-            cabal update || cabal v2-update || true
-            cabal install lit --allow-newer --overwrite-policy=always
-          fi
-          echo "$HOME/.cabal/bin" >> $GITHUB_PATH
+          sudo apt-get install -y postgresql-client meson ninja-build doxygen python3-sqlparse
 
       - name: Setup Meson
         run: |
-          meson setup buildDir \
+          meson setup build \
             -Dpghost=localhost \
             -Dpgport=5432 \
             -Dpguser=ubuntu \
@@ -75,9 +65,9 @@ jobs:
 
       - name: Load Database via Meson
         run: |
-          meson compile -C buildDir load
-          meson compile -C buildDir load_pgtap
+          meson compile -C build load
+          meson compile -C build load_pgtap
 
       - name: Run Tests via Meson
         run: |
-          meson test -C buildDir --verbose
+          meson test -C build --verbose

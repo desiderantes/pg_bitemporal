@@ -91,7 +91,7 @@ Foriegn Key constraints. These function decode the information embeded in the ca
 
 ### Primary Key.
 
-The functions finds the bitemporal primary key for the given table. The name
+The function finds the bitemporal primary key for the given table. The name
 of the column is returned as a text value. Only one column is supported.
 
 ```sql
@@ -101,7 +101,7 @@ of the column is returned as a text value. Only one column is supported.
 ### Foreign Key
 
 The function finds all the bitemporal Foreign Key constraints for a given
-table. The fucntion returns the complete set of all Foreign Keys for the
+table. The function returns the complete set of all Foreign Keys for the
 given table.
 
 There is a special composite type in the

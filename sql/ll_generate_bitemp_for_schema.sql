@@ -1,3 +1,13 @@
+/**
+ * @file ll_generate_bitemp_for_schema.sql
+ * @ingroup bitemporal_schema
+ * @brief Generates DDL scripts to create bitemporal versions of all tables in a schema.
+ * @param[in] p_schema_name text Name of the source schema whose tables will be transformed into bitemporal tables.
+ * @return text SQL DDL script containing ll_create_bitemporal_table invocations for each table in the schema.
+ * @pre Source schema must exist and contain base tables with primary keys.
+ * @post Generates SQL string to construct `<schema>_bitemporal` tables.
+ * @sa ll_create_bitemporal_table
+ */
 create or replace function bitemporal_internal.ll_generate_bitemp_for_schema(p_schema_name text)
 returns text as
 $BODY$
