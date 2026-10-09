@@ -1,8 +1,8 @@
 # pg_bitemporal
 
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12%20%7C%2013%20%7C%2014%20%7C%2015%20%7C%2016%20%7C%2017%20%7C%2018-blue.svg)](https://www.postgresql.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%20%7C%2015%20%7C%2016%20%7C%2017%20%7C%2018-blue.svg)](https://www.postgresql.org/)
 [![Build System](https://img.shields.io/badge/Meson-1.0%2B-green.svg)](https://mesonbuild.com/)
-[![Tests](https://img.shields.io/badge/pgTAP-77%20passed-success.svg)](http://pgtap.org/)
+[![Tests](https://img.shields.io/badge/pgTAP-97%20passed-success.svg)](http://pgtap.org/)
 [![Documentation](https://img.shields.io/badge/Doxygen-HTML%20%26%20XML-orange.svg)](https://www.doxygen.nl/)
 
 **pg_bitemporal** is a PostgreSQL extension and library that brings comprehensive **bitemporal data management** and
@@ -156,7 +156,7 @@ The library implements Allen's 13 basic interval relationships (Allen 1983) and 
 
 ### Prerequisites
 
-- **PostgreSQL**: 12+ (tested through PostgreSQL 18)
+- **PostgreSQL**: 14+ (tested through PostgreSQL 18)
 - **Meson**: 1.0+
 - **Ninja**: 1.10+
 - **Python**: 3.8+ with `sqlparse` (`pip install sqlparse`)
