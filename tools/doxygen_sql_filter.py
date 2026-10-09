@@ -97,6 +97,12 @@ def filter_sql_content(content: str) -> str:
             c_params = convert_pgsql_params_to_c(raw_params)
 
             if comment_text:
+                file_match = re.search(r'@file\s+([^\s]+)', comment_text)
+                if file_match:
+                    filename = file_match.group(1)
+                    if not any(filename in h for h in header_docs):
+                        header_docs.append(f'/** @file {filename}\n */')
+
                 # Strip @file lines from function-level docstrings to prevent Doxygen from treating
                 # function docstrings as file-level overviews.
                 lines = [line for line in comment_text.splitlines() if not re.search(r'@file\b', line)]

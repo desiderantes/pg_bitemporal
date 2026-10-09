@@ -1,4 +1,10 @@
-# Detect Doxygen documentation generator
+pymod = import('python')
+py = pymod.find_installation(
+    'python3',
+    modules: ['sqlparse', 'breathe', 'myst_parser'],
+    required: true,
+)
+
 doxygen = find_program('doxygen', required: true)
 
 doxygen_conf = configuration_data()
@@ -17,10 +23,10 @@ doxyfile = configure_file(
     configuration: doxygen_conf,
 )
 
-docs = custom_target(
-    'docs',
+doxygen_target = custom_target(
+    'doxygen_out',
     input: [sql_files, doxyfile],
-    output: 'html',
+    output: ['xml', 'html'],
     command: [doxygen, doxyfile],
     build_by_default: true,
 )
