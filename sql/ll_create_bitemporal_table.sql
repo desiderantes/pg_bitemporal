@@ -11,13 +11,15 @@
  * @pre Target schema must exist.
  * @post Creates physical table containing surrogate PK `<table_name>_key`, attributes, `effective`, `asserted`, `row_created_at`, and exclusion constraint `<table_name>_<business_key>_assert_eff_excl`.
  * @sa ll_is_bitemporal_table, ll_generate_bitemp_for_schema
- * @example
+ * @par Example
+ * @code
  * SELECT * FROM bitemporal_internal.ll_create_bitemporal_table(
  *     'bitemp_tables',
  *     'devices',
  *     'device_id integer, device_descr text',
  *     'device_id'
  * );
+ * @endcode
  */
 CREATE OR REPLACE FUNCTION bitemporal_internal.ll_create_bitemporal_table(
     p_schema text,
