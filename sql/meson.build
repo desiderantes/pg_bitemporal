@@ -20,6 +20,7 @@ sql_files = files(
     'll_check_bitemporal_update_conditions.sql',
     'll_create_bitemporal_table.sql',
     'll_create_bitemporal_view.sql',
+    'll_drop_bitemporal_view.sql',
     'll_generate_bitemp_for_schema.sql',
     'll_generate_fk_trigger_function.sql',
     'll_generate_fk_validate.sql',

@@ -1,24 +1,34 @@
 /**
  * @file ll_create_bitemporal_view.sql
  * @ingroup bitemporal_schema
- * @brief Creates an updatable current-state view for a bitemporal table with INSTEAD OF triggers.
+ * @brief Creates a parameterized as_of temporal query function and an updatable current-state view with INSTEAD OF triggers.
  * @param[in] p_schema text Schema name containing the bitemporal table.
  * @param[in] p_table text Bitemporal table name.
  * @param[in] p_view text Mandatory target view name to create.
- * @retval true View and INSTEAD OF triggers created successfully.
+ * @param[in] p_recreate boolean Optional flag to drop and recreate existing view and functions (defaults to false).
+ * @retval true View, as_of function, and INSTEAD OF triggers created successfully.
  * @retval false View creation failed (error diagnostic logged via RAISE NOTICE).
  * @pre Target table must exist and be a valid bitemporal table.
- * @post Creates view `<p_schema>.<p_view>` filtered by `now() <@ effective AND now() <@ asserted`, and binds an INSTEAD OF trigger supporting INSERT, UPDATE, and DELETE.
- * @sa ll_create_bitemporal_table, ll_is_bitemporal_table
+ * @post Creates parameterized query function `<p_schema>.<p_view>_as_of(p_effective, p_asserted)`, creates view `<p_schema>.<p_view>` specialized to `now(), now()`, and binds an INSTEAD OF trigger supporting INSERT, UPDATE, and DELETE.
+ * @sa ll_create_bitemporal_table, ll_is_bitemporal_table, ll_drop_bitemporal_view
  * @par Example
  * @code
  * SELECT bitemporal_internal.ll_create_bitemporal_view('myschema', 'orders_bt', 'orders');
+ * -- Query historical state at valid time V as known at evaluation time E:
+ * SELECT * FROM myschema.orders_as_of('2026-09-01', '2026-02-28');
+ * -- Query and modify current state:
+ * SELECT * FROM myschema.orders;
+ * -- Recreate view after schema modification:
+ * SELECT bitemporal_internal.ll_create_bitemporal_view('myschema', 'orders_bt', 'orders', p_recreate := true);
  * @endcode
  */
+DROP FUNCTION IF EXISTS bitemporal_internal.ll_create_bitemporal_view(text, text, text);
+
 CREATE OR REPLACE FUNCTION bitemporal_internal.ll_create_bitemporal_view(
     p_schema text,
     p_table text,
-    p_view text
+    p_view text,
+    p_recreate boolean DEFAULT false
 )
 RETURNS boolean AS
 $BODY$
@@ -32,6 +42,8 @@ DECLARE
     v_non_key_cols text[];
     v_non_key_types text[];
     v_view_cols_str text;
+    v_as_of_cols_str text;
+    v_as_of_func_name text;
     v_key_cols_str text;
     v_non_key_cols_str text;
     v_insert_cols_str text;
@@ -53,6 +65,11 @@ BEGIN
     END IF;
     IF p_view IS NULL OR trim(p_view) = '' THEN
         RAISE EXCEPTION 'View name cannot be null or empty';
+    END IF;
+
+    -- Drop existing view and functions if recreate requested
+    IF p_recreate THEN
+        PERFORM bitemporal_internal.ll_drop_bitemporal_view(p_schema, p_view, true);
     END IF;
 
     -- Validate target table is bitemporal
@@ -115,13 +132,44 @@ BEGIN
     v_key_cols_str := array_to_string(v_business_key_array, ', ');
     v_non_key_cols_str := array_to_string(v_non_key_cols, ', ');
 
-    -- 1. Create or replace the view
+    -- Column definitions for as_of function return table
+    SELECT array_to_string(
+        array_agg(quote_ident(u.col) || ' ' || u.typ ORDER BY u.ord),
+        ', '
+    )
+    INTO v_as_of_cols_str
+    FROM unnest(v_all_view_cols, v_all_view_types) WITH ORDINALITY AS u(col, typ, ord);
+
+    v_as_of_func_name := p_view || '_as_of';
+
+    -- 1. Create or replace the parameterized as_of function
     EXECUTE format(
-        'CREATE OR REPLACE VIEW %I.%I AS SELECT %s FROM %I.%I WHERE now() <@ effective AND now() <@ asserted',
-        p_schema, p_view, v_view_cols_str, p_schema, p_table
+        $as_of$
+CREATE OR REPLACE FUNCTION %I.%I(
+    p_effective timestamptz DEFAULT now(),
+    p_asserted timestamptz DEFAULT now()
+)
+RETURNS TABLE (%s)
+LANGUAGE sql STABLE AS $body$
+    SELECT %s
+    FROM %I.%I
+    WHERE p_effective <@ effective
+      AND p_asserted <@ asserted;
+$body$;
+        $as_of$,
+        p_schema, v_as_of_func_name,
+        v_as_of_cols_str,
+        v_view_cols_str,
+        p_schema, p_table
     );
 
-    -- 2. Build trigger function components
+    -- 2. Create or replace the view (specialization of as_of at now(), now())
+    EXECUTE format(
+        'CREATE OR REPLACE VIEW %I.%I AS SELECT * FROM %I.%I(now(), now())',
+        p_schema, p_view, p_schema, v_as_of_func_name
+    );
+
+    -- 3. Build trigger function components
     -- INSERT columns and values
     v_insert_cols_str := v_view_cols_str || ', effective, asserted';
     SELECT array_to_string(array_agg('NEW.' || quote_ident(col)), ', ')

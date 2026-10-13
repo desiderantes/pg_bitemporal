@@ -3,7 +3,7 @@ set client_min_messages to warning;
 set local search_path = 'bitemporal_internal', 'public';
 set local TimeZone = 'UTC';
 
-SELECT plan(20);
+SELECT plan(39);
 
 select lives_ok($$ 
     create schema test_view_schema;
@@ -39,8 +39,9 @@ select is(
     'll_create_bitemporal_view succeeds'
 );
 
--- Verify view exists in information_schema
+-- Verify view and as_of function exist
 select has_view('test_view_schema', 'orders', 'view test_view_schema.orders exists');
+select has_function('test_view_schema', 'orders_as_of', 'function test_view_schema.orders_as_of exists');
 
 -- 4. Test INSERT on view
 select lives_ok($$
@@ -86,7 +87,20 @@ select is(
     'underlying orders_bt preserved historical version (2 active asserted rows)'
 );
 
--- 6. Test DELETE on view
+-- 6. Test parameterized as_of function
+select results_eq(
+    $$ SELECT status FROM test_view_schema.orders_as_of() WHERE order_id = 2 $$,
+    $$ VALUES ('SHIPPED'::text) $$,
+    'orders_as_of() defaults to current state'
+);
+
+select results_eq(
+    $$ SELECT status FROM test_view_schema.orders_as_of('2020-06-01'::timestamptz, now()) WHERE order_id = 2 $$,
+    $$ VALUES ('PENDING'::text) $$,
+    'orders_as_of(V, E) reconstructs historical validity state'
+);
+
+-- 7. Test DELETE on view
 select lives_ok($$
     DELETE FROM test_view_schema.orders
     WHERE order_id = 2;
@@ -115,7 +129,7 @@ select is(
     'order 1 is deleted from view'
 );
 
--- 7. Test composite business key
+-- 8. Test composite business key
 select lives_ok($$
     select * from bitemporal_internal.ll_create_bitemporal_table(
         'test_view_schema',
@@ -133,10 +147,81 @@ select lives_ok($$
     UPDATE test_view_schema.order_items SET qty = 12 WHERE order_id = 1 AND item_id = 10;
 $$, 'composite key table view setup and update');
 
+select has_function('test_view_schema', 'order_items_as_of', 'function test_view_schema.order_items_as_of exists');
+
 select results_eq(
     $$ SELECT qty FROM test_view_schema.order_items WHERE order_id = 1 AND item_id = 10 $$,
     $$ VALUES (12) $$,
     'composite key view reflects updated qty'
+);
+
+select results_eq(
+    $$ SELECT qty FROM test_view_schema.order_items_as_of('2020-06-01'::timestamptz) WHERE order_id = 1 AND item_id = 10 $$,
+    $$ VALUES (5) $$,
+    'composite key order_items_as_of historical valid query returns 5'
+);
+
+-- 9. Test ll_drop_bitemporal_view error cases and functionality
+select is(
+    bitemporal_internal.ll_drop_bitemporal_view('test_view_schema', ''),
+    false,
+    'll_drop_bitemporal_view fails on empty view name'
+);
+
+select is(
+    bitemporal_internal.ll_drop_bitemporal_view('test_view_schema', 'order_items'),
+    true,
+    'll_drop_bitemporal_view succeeds'
+);
+
+select hasnt_view('test_view_schema', 'order_items', 'view order_items was dropped');
+select hasnt_function('test_view_schema', 'order_items_as_of', 'function order_items_as_of was dropped');
+select hasnt_function('test_view_schema', 'order_items_bitemporal_dml', 'function order_items_bitemporal_dml was dropped');
+
+-- 10. Test schema evolution on bitemporal table with p_recreate := true
+-- Insert an active row before table alteration
+select lives_ok($$
+    INSERT INTO test_view_schema.orders (order_id, cust_id, status)
+    VALUES (50, 500, 'PENDING');
+$$, 'insert row 50 before schema alteration');
+
+select lives_ok($$
+    ALTER TABLE test_view_schema.orders_bt ADD COLUMN notes text;
+$$, 'add column notes to orders_bt');
+
+select is(
+    bitemporal_internal.ll_create_bitemporal_view('test_view_schema', 'orders_bt', 'orders', true),
+    true,
+    'recreate view with p_recreate := true succeeds after schema alteration'
+);
+
+select has_view('test_view_schema', 'orders', 'view orders recreated');
+select has_function('test_view_schema', 'orders_as_of', 'function orders_as_of recreated');
+
+-- Verify new column is usable through view
+select lives_ok($$
+    INSERT INTO test_view_schema.orders (order_id, cust_id, status, notes)
+    VALUES (99, 999, 'EXPRESS', 'rush order');
+$$, 'insert with newly added column through view');
+
+-- Verify pre-existing row has NULL for the new column
+select results_eq(
+    $$ SELECT notes FROM test_view_schema.orders WHERE order_id = 50 $$,
+    $$ VALUES (NULL::text) $$,
+    'pre-existing row has NULL for newly added column in view'
+);
+
+-- Verify new row has the value
+select results_eq(
+    $$ SELECT notes FROM test_view_schema.orders WHERE order_id = 99 $$,
+    $$ VALUES ('rush order'::text) $$,
+    'view reflects newly added column for new row'
+);
+
+select results_eq(
+    $$ SELECT notes FROM test_view_schema.orders_as_of() WHERE order_id = 99 $$,
+    $$ VALUES ('rush order'::text) $$,
+    'as_of function reflects newly added column'
 );
 
 SELECT * FROM finish();

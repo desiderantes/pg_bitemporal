@@ -6,6 +6,7 @@ py = pymod.find_installation(
 )
 
 doxygen = find_program('doxygen', required: true)
+sphinx = find_program('sphinx-build', required: true)
 
 doxygen_conf = configuration_data()
 doxygen_conf.set('PROJECT_NAME', meson.project_name())
@@ -28,5 +29,20 @@ doxygen_target = custom_target(
     input: [sql_files, doxyfile],
     output: ['xml', 'html'],
     command: [doxygen, doxyfile],
+    build_by_default: true,
+)
+
+docs = custom_target(
+    'sphinx_out',
+    input: [doxygen_target],
+    output: 'sphinx',
+    env: {'DOXYGEN_XML_DIR': meson.current_build_dir() / 'xml'},
+    command: [
+        sphinx,
+        '-b',
+        'html',
+        meson.project_source_root() / 'docs',
+        meson.current_build_dir() / 'sphinx',
+    ],
     build_by_default: true,
 )
