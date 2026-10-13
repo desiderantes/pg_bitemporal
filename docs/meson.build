@@ -6,7 +6,7 @@ py = pymod.find_installation(
 )
 
 doxygen = find_program('doxygen', required: true)
-sphinx = find_program('sphinx-build', required: true)
+sphinx = find_program('sphinx-build', required: false)
 
 doxygen_conf = configuration_data()
 doxygen_conf.set('PROJECT_NAME', meson.project_name())
@@ -44,5 +44,5 @@ docs = custom_target(
         meson.project_source_root() / 'docs',
         meson.current_build_dir() / 'sphinx',
     ],
-    build_by_default: true,
+    build_by_default: false,
 )

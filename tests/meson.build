@@ -17,6 +17,7 @@ test_files = [
     '16_metadata.sql',
     '20_ll_update.sql',
     '25_ll_view.sql',
+    '26_ll_partitioned.sql',
 ]
 
 foreach t : test_files

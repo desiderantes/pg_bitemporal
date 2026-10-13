@@ -1,3 +1,15 @@
+/**
+ * @file ll_create_bitemporal_table_partitioned.sql
+ * @ingroup bitemporal_ddl
+ * @brief Creates a declarative partitioned bitemporal table.
+ * @param[in] p_schema text Schema name where table will reside.
+ * @param[in] p_table text Base table name.
+ * @param[in] p_table_definition text Column definitions for business payload fields.
+ * @param[in] p_business_key text Comma-separated column name(s) forming the business key.
+ * @param[in] p_partitioned_by text Optional expression to partition by range (defaults to business key).
+ * @return boolean True if table creation succeeded, false otherwise.
+ * @sa ll_create_bitemporal_table, ll_create_bitemporal_partition
+ */
 CREATE OR REPLACE FUNCTION bitemporal_internal.ll_create_bitemporal_table_partitioned(
 	p_schema text,
 	p_table text,

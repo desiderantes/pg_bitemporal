@@ -18,6 +18,8 @@ sql_files = files(
     'll_bitemporal_update_select.sql',
     'll_bitemporal_update.sql',
     'll_check_bitemporal_update_conditions.sql',
+    'll_create_bitemporal_partition.sql',
+    'll_create_bitemporal_table_partitioned.sql',
     'll_create_bitemporal_table.sql',
     'll_create_bitemporal_view.sql',
     'll_drop_bitemporal_view.sql',

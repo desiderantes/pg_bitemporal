@@ -1,3 +1,14 @@
+/**
+ * @file ll_create_bitemporal_partition.sql
+ * @ingroup bitemporal_ddl
+ * @brief Creates a partition for a partitioned bitemporal table, including the GiST exclusion constraint.
+ * @param[in] p_schema text Schema name where table and partition reside.
+ * @param[in] p_table text Base partitioned table name.
+ * @param[in] p_partition_name text Partition table name to create.
+ * @param[in] p_range text Value range for partition (e.g. `FROM ('2023-01-01') TO ('2023-02-01')`).
+ * @return boolean True if partition creation and constraint setup succeeded, false otherwise.
+ * @sa ll_create_bitemporal_table_partitioned
+ */
 CREATE OR REPLACE FUNCTION bitemporal_internal.ll_create_bitemporal_partition(
 	p_schema text,
 	p_table text,
