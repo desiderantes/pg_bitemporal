@@ -1,6 +1,6 @@
 /**
  * @file ll_create_bitemporal_partition.sql
- * @ingroup bitemporal_ddl
+ * @ingroup bitemporal_schema
  * @brief Creates a partition for a partitioned bitemporal table, including the GiST exclusion constraint.
  * @param[in] p_schema text Schema name where table and partition reside.
  * @param[in] p_table text Base partitioned table name.

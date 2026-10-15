@@ -47,7 +47,9 @@ def convert_pgsql_params_to_c(raw_params: str) -> str:
         parts = p.strip().split()
         if len(parts) >= 2:
             p_name = parts[0]
-            p_type = ' '.join(parts[1:])
+            # Replace schema-qualification dot (e.g. temporal_relationships.timeperiod -> timeperiod)
+            raw_type = ' '.join(parts[1:])
+            p_type = raw_type.split('.')[-1]
             c_params.append(f'{p_type} {p_name}')
         elif len(parts) == 1:
             c_params.append(parts[0])

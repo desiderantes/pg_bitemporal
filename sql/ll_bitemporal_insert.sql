@@ -11,7 +11,8 @@
  * @pre Target table must exist and be bitemporal.
  * @post Inserts a new record into `p_table` with `effective` and `asserted` ranges set.
  * @sa ll_bitemporal_insert_select, ll_bitemporal_update
- * @example
+ * @par Example
+ * @code
  * SELECT * FROM bitemporal_internal.ll_bitemporal_insert(
  *     'bitemp_tables.devices',
  *     'device_id, device_descr',
@@ -19,6 +20,7 @@
  *     '[now(), infinity)'::tstzrange,
  *     '[now(), infinity)'::tstzrange
  * );
+ * @endcode
  */
 CREATE OR REPLACE FUNCTION bitemporal_internal.ll_bitemporal_insert(p_table text
 ,p_list_of_fields text

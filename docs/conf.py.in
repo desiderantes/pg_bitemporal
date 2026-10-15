@@ -1,0 +1,46 @@
+import os
+import sys
+
+# Project Information
+project = "@PROJECT_NAME@"
+copyright = "2026, @PROJECT_NAME@ contributors"
+author = "@PROJECT_NAME@ contributors"
+release = "@PROJECT_VERSION@"
+
+# Add parent directory for custom extensions if needed
+sys.path.insert(0, os.path.abspath("."))
+
+# Sphinx Extensions
+extensions = [
+    "myst_parser",
+    "breathe",
+]
+
+# Breathe Configuration (Bridges Doxygen XML to Sphinx)
+doxygen_xml_dir = "@DOXYGEN_XML_DIR@"
+
+breathe_projects = {
+    "@PROJECT_NAME@": doxygen_xml_dir,
+}
+breathe_default_project = "@PROJECT_NAME@"
+
+# MyST (Markdown) Configuration
+myst_enable_extensions = [
+    "colon_fence",
+    "fieldlist",
+    "dollarmath",
+    "deflist",
+    "tasklist",
+]
+myst_heading_anchors = 3
+
+# HTML Theme Settings
+try:
+    import furo
+
+    html_theme = "furo"
+except ImportError:
+    html_theme = "alabaster"
+
+html_title = "@PROJECT_NAME@ Documentation"
+html_static_path = []

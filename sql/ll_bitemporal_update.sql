@@ -17,7 +17,8 @@
  * @throws EXCEPTION 'Empty list of fields for a table' if table metadata lookup fails.
  * @warning Update vs Correction: `ll_bitemporal_update` creates new temporal versions. To correct errant data without versioning history, use `ll_bitemporal_correction`.
  * @sa ll_bitemporal_update_select, ll_bitemporal_correction
- * @example
+ * @par Example
+ * @code
  * SELECT * FROM bitemporal_internal.ll_bitemporal_update(
  *     'bitemp_tables',
  *     'devices',
@@ -28,6 +29,7 @@
  *     '[2020-01-01, infinity)',
  *     '[now(), infinity)'
  * );
+ * @endcode
  */
 CREATE OR REPLACE FUNCTION bitemporal_internal.ll_bitemporal_update(p_schema_name text
 ,p_table_name text

@@ -1,6 +1,6 @@
 /**
  * @file ll_create_bitemporal_table_partitioned.sql
- * @ingroup bitemporal_ddl
+ * @ingroup bitemporal_schema
  * @brief Creates a declarative partitioned bitemporal table.
  * @param[in] p_schema text Schema name where table will reside.
  * @param[in] p_table text Base table name.

@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS bitemporal_internal.ll_create_bitemporal_view(text, text, text);
+
 /**
  * @file ll_create_bitemporal_view.sql
  * @ingroup bitemporal_schema
@@ -10,7 +12,11 @@
  * @retval false View creation failed (error diagnostic logged via RAISE NOTICE).
  * @pre Target table must exist and be a valid bitemporal table.
  * @post Creates parameterized query function `<p_schema>.<p_view>_as_of(p_effective, p_asserted)`, creates view `<p_schema>.<p_view>` specialized to `now(), now()`, and binds an INSTEAD OF trigger supporting INSERT, UPDATE, and DELETE.
- * @sa ll_create_bitemporal_table, ll_is_bitemporal_table, ll_drop_bitemporal_view
+ * @sa ll_create_bitemporal_table, ll_is_bitemporal_table, ll_drop_bitemporal_view, ll_bitemporal_insert_select_effective
+ * @note Point-in-Time Querying vs. Bulk Ingestion:
+ * The generated `<view>_as_of` function performs **point-in-time reads** using interval containment
+ * (`p_effective <@ effective AND p_asserted <@ asserted`). For **bulk ingestion** of batches that already
+ * carry explicit validity intervals, use `bitemporal_internal.ll_bitemporal_insert_select_effective`.
  * @par Example
  * @code
  * SELECT bitemporal_internal.ll_create_bitemporal_view('myschema', 'orders_bt', 'orders');
@@ -22,7 +28,6 @@
  * SELECT bitemporal_internal.ll_create_bitemporal_view('myschema', 'orders_bt', 'orders', p_recreate := true);
  * @endcode
  */
-DROP FUNCTION IF EXISTS bitemporal_internal.ll_create_bitemporal_view(text, text, text);
 
 CREATE OR REPLACE FUNCTION bitemporal_internal.ll_create_bitemporal_view(
     p_schema text,

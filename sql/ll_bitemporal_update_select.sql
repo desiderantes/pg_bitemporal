@@ -147,7 +147,8 @@ $BODY$ LANGUAGE plpgsql;
  * @post Updates target records using subquery dataset.
  * @throws EXCEPTION 'Asserted interval starts in the past or has a finite end' if `p_asserted` bounds are invalid.
  * @sa ll_bitemporal_update
- * @example
+ * @par Example
+ * @code
  * SELECT * FROM bitemporal_internal.ll_bitemporal_update_select(
  *     'bitemp_tables',
  *     'devices',
@@ -158,6 +159,7 @@ $BODY$ LANGUAGE plpgsql;
  *     temporal_relationships.timeperiod(now(), infinity),
  *     temporal_relationships.timeperiod(now(), infinity)
  * );
+ * @endcode
  */
 CREATE OR REPLACE FUNCTION bitemporal_internal.ll_bitemporal_update_select(p_schema_name text,
  p_table_name  text

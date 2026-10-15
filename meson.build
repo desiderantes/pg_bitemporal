@@ -7,6 +7,15 @@ project(
 # Programs
 psql_cli = find_program('psql', required: true)
 
+# Configuration summary
+summary(
+    {
+        'psql CLI': psql_cli.full_path() + ' (' + psql_cli.version() + ')',
+    },
+    section: 'Database Configuration',
+)
+
+
 # Database environment setup from meson options
 pgdatabase = get_option('pgdatabase')
 pghost = get_option('pghost')
@@ -33,12 +42,44 @@ psql_base = [
     ['-U', pguser],
     ['-d', pgdatabase],
 ]
+
+# Configuration summary
+summary(
+    {
+        'PostgreSQL Target': pgversion,
+        'Database Host': pghost,
+        'Database Port': pgport,
+        'Database Name': pgdatabase,
+        'Database User': pguser,
+    },
+    section: 'Database Configuration',
+)
+
 # Subdirectories
 subdir('sql')
+
+summary(
+    {
+        'Docs Enabled': get_option('generate_docs'),
+    },
+    section: 'Documentation',
+)
+
 if get_option('generate_docs').enabled()
     subdir('docs')
 endif
 
+summary(
+    {
+        'Tests Run': get_option('tests'),
+    },
+    section: 'Testing',
+)
+
+
 if get_option('tests')
     subdir('tests')
 endif
+
+
+
