@@ -11,13 +11,13 @@ summary(
     section: 'Documentation',
 )
 fsmod = import('fs')
+eq_ops = ['>=', '==', '<=']
 req_lines = fsmod.read('requirements.txt').strip().split('\n')
 
-pydeps = {}
 foreach line : req_lines
     clean_line = line.strip()
     if clean_line != '' and not clean_line.startswith('#')
-        foreach op : ['>=', '==', '<=']
+        foreach op : eq_ops
             if clean_line.contains(op)
                 pydep = clean_line.split(op)[0].strip()
                 pyversion = clean_line.split(op)[1].strip()
@@ -68,9 +68,76 @@ foreach line : req_lines
     endif
 endforeach
 
-foreach pydep, pyversion : pydeps
+if fsmod.is_file('optional-requirements.txt')
+    opt_lines = fsmod.read('optional-requirements.txt').strip().split('\n')
+    foreach line : opt_lines
+        clean_line = line.strip()
+        if clean_line != '' and not clean_line.startswith('#')
+            foreach op : eq_ops
+                if clean_line.contains(op)
+                    pydep = clean_line.split(op)[0].strip()
+                    pyversion = clean_line.split(op)[1].strip()
+                    # Query installed version via importlib.metadata.version()
+                    res = run_command(
+                        py,
+                        '-c',
+                        'import importlib.metadata as m; print(m.version("@0@"))'.format(
+                            pydep,
+                        ),
+                        check: false,
+                    )
 
-endforeach
+                    if res.returncode() != 0
+                        warning(
+                            'Optional Python package "@0@" is not installed.'.format(
+                                pydep,
+                            ),
+                        )
+                        summary(
+                            {
+                                'Python Dependency (optional): ' + pydep: 'not found',
+                            },
+                            section: 'Documentation',
+                        )
+                    else
+                        installed_ver = res.stdout().strip()
+                        if not installed_ver.version_compare(op + pyversion)
+                            warning(
+                                'Optional package "@0@" version @1@ does not satisfy requirement @2@@3@'.format(
+                                    pydep,
+                                    installed_ver,
+                                    op,
+                                    pyversion,
+                                ),
+                            )
+                            summary(
+                                {
+                                    'Python Dependency (optional): ' + pydep: '@0@ (does not satisfy @1@@2@)'.format(
+                                        installed_ver,
+                                        op,
+                                        pyversion,
+                                    ),
+                                },
+                                section: 'Documentation',
+                            )
+                        else
+                            summary(
+                                {
+                                    'Python Dependency (optional): ' + pydep: '@0@ (satisfies @1@@2@)'.format(
+                                        installed_ver,
+                                        op,
+                                        pyversion,
+                                    ),
+                                },
+                                section: 'Documentation',
+                            )
+                        endif
+                    endif
+                endif
+            endforeach
+        endif
+    endforeach
+endif
 
 
 doxygen = find_program('doxygen', required: true)

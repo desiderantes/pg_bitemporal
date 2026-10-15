@@ -15,22 +15,6 @@ jobs:
       matrix:
         pg_version: ['14', '15', '16', '17', '18']
 
-    services:
-      postgres:
-        image: postgres:${{ matrix.pg_version }}
-        env:
-          POSTGRES_USER: ubuntu
-          POSTGRES_PASSWORD: f0285cb79f623675a3df3fe88a014d80a7276e55
-          POSTGRES_DB: ci_test
-          POSTGRES_HOST_AUTH_METHOD: trust
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     env:
       CI: "true"
       PGHOST: localhost
@@ -40,13 +24,29 @@ jobs:
       PGDATABASE: ci_test
       POSTGRES_VERSION: ${{ matrix.pg_version }}
 
+    services:
+      postgres:
+        image: postgres:${{ matrix.pg_version }}
+        env:
+          POSTGRES_USER: ${{ env.PGUSER }}
+          POSTGRES_PASSWORD: ${{ env.PGPASSWORD }}
+          POSTGRES_DB: ${{ env.PGDATABASE }}
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Configure PostgreSQL credentials
         run: |
-          echo "*:*:*:ubuntu:f0285cb79f623675a3df3fe88a014d80a7276e55" > ~/.pgpass
+          echo "*:*:*:${PGUSER}:${PGPASSWORD}" > ~/.pgpass
           chmod 600 ~/.pgpass
 
       - name: Install dependencies
@@ -57,11 +57,11 @@ jobs:
       - name: Setup Meson
         run: |
           meson setup build \
-            -Dpghost=localhost \
-            -Dpgport=5432 \
-            -Dpguser=ubuntu \
-            -Dpgdatabase=ci_test \
-            -Dpgversion=${{ matrix.pg_version }}
+            -Dpghost="$PGHOST" \
+            -Dpgport="$PGPORT" \
+            -Dpguser="$PGUSER" \
+            -Dpgdatabase="$PGDATABASE" \
+            -Dpgversion="$POSTGRES_VERSION"
 
       - name: Load Database via Meson
         run: |
