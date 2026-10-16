@@ -11,9 +11,9 @@
 Bitemporal data models track history across two distinct temporal dimensions:
 
 1. **Effective Time (Valid Time)**: When a business fact is, was, or will be valid in the real world
-   (`effective tstzrange`).
+   (`effective temporal_relationships.timeperiod`, based on `tstzrange`).
 2. **Asserted Time (Transaction/System Time)**: When a fact was asserted as true by the database system
-   (`asserted tstzrange`).
+   (`asserted temporal_relationships.timeperiod`, based on `tstzrange`).
 
 ---
 
@@ -24,6 +24,9 @@ Bitemporal data models track history across two distinct temporal dimensions:
 - 🔄 **Bitemporal DML (CRUD)**: Insert, update, update-select, deactivate, and delete rows while automatically
   maintaining complete historical validity windows without data loss.
 - 🛠️ **Bitemporal Correction**: Correct errant data in-place without creating redundant version history.
+- 👓 **Transparent Updatable Views & `as_of` Queries**: Automatically generate current-state views wired with `INSTEAD OF`
+  triggers (allowing standard `INSERT`, `UPDATE`, and `DELETE` from applications or ORMs) alongside `<view>_as_of`
+  functions for point-in-time historical reads.
 - 📐 **Allen's 13 Temporal Interval Relationships**: Full implementation of James Allen's 13 interval relationships
   (`is_before`, `is_after`, `has_starts`, `has_finishes`, `equals`, `is_during`, `is_contained_in`, `is_overlaps`,
   `is_meets`).
@@ -39,6 +42,11 @@ Bitemporal data models track history across two distinct temporal dimensions:
 | **Effective Time**  | `effective`      | `temporal_relationships.timeperiod` (`tstzrange`) | Business validity period (`[valid_start, valid_end)`).      |
 | **Asserted Time**   | `asserted`       | `temporal_relationships.timeperiod` (`tstzrange`) | System assertion period (`[asserted_start, asserted_end)`). |
 | **Audit Timestamp** | `row_created_at` | `timestamptz`                                     | Record creation timestamp (`DEFAULT now()`).                |
+
+> **Note on Temporal Types**:
+> The `temporal_relationships.timeperiod` type is a custom PostgreSQL `DOMAIN` over **`tstzrange`** (range of `timestamptz`), with endpoints typed as `temporal_relationships.time_endpoint` (`timestamptz`). It is **not** a `daterange`.
+>
+> In SQL examples, shorthand date strings like `'[2024-01-01, infinity)'` are automatically parsed by PostgreSQL as midnight timestamp with time zone (`2024-01-01 00:00:00+00`). You can also use the constructor function `temporal_relationships.timeperiod(start_ts, end_ts)`.
 
 ### Exclusion Constraint Security
 
@@ -95,7 +103,62 @@ SELECT bitemporal_internal.ll_bitemporal_update(
        );
 ```
 
-### 4. Query Allen's Temporal Relationships
+### 4. Create an Updatable View & Point-in-Time Query Function
+
+To allow standard applications, ORMs, and reporting tools to interact with a bitemporal table without managing temporal intervals, generate an updatable current-state view and companion `as_of` query function:
+
+```sql
+SELECT bitemporal_internal.ll_create_bitemporal_view(
+               'public',         -- schema
+               'devices',        -- underlying bitemporal table
+               'devices_current' -- target view name
+       );
+```
+
+#### Transparent DML via View
+The view exposes only business attributes (hiding surrogate keys and temporal range intervals), filtering to currently active records (`now() <@ effective AND now() <@ asserted`). It is wired with PostgreSQL `INSTEAD OF` triggers that transparently invoke the underlying bitemporal DML:
+
+```sql
+-- Standard INSERT transparently performs a bitemporal insert:
+INSERT INTO public.devices_current (device_id, device_descr)
+VALUES (2, 'Switch X');
+
+-- Standard UPDATE transparently performs a bitemporal update:
+UPDATE public.devices_current
+SET device_descr = 'Switch X (Gigabit)'
+WHERE device_id = 2;
+
+-- Standard DELETE transparently performs a bitemporal deletion:
+DELETE FROM public.devices_current
+WHERE device_id = 2;
+```
+
+#### Point-in-Time Querying (`as_of`)
+`ll_create_bitemporal_view` automatically generates a companion `<view>_as_of(p_effective, p_asserted)` function that enables historical point-in-time reads across both temporal dimensions:
+
+```sql
+-- What was the valid state of devices on 2024-03-01 according to what the database knew on 2024-06-01?
+SELECT * FROM public.devices_current_as_of('2024-03-01', '2024-06-01');
+
+-- Query historical effective validity as known by the database right now:
+SELECT * FROM public.devices_current_as_of('2024-03-01', now());
+
+-- Query current effective validity as known by the database right now (it is the same as querying the generated view):
+SELECT * FROM public.devices_current_as_of(now(), now());
+```
+
+#### Recreating or Dropping Views
+```sql
+-- Recreate the view after altering columns on the underlying table:
+SELECT bitemporal_internal.ll_create_bitemporal_view('public', 'devices', 'devices_current', p_recreate := true);
+
+-- Safely drop the view, triggers, and as_of function:
+SELECT bitemporal_internal.ll_drop_bitemporal_view('public', 'devices_current');
+```
+
+---
+
+### 5. Query Allen's Temporal Relationships
 
 ```sql
 -- Check if range A is strictly during range B

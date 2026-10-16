@@ -100,6 +100,20 @@ as $f$
 $f$;
 
 create or replace 
+function bitemporal_internal.execute_add_constraint(table_name text, _con text)
+returns text
+language plpgsql
+as $f$ 
+declare
+  v_sql text;
+begin
+  v_sql := bitemporal_internal.add_constraint(table_name, _con);
+  execute v_sql;
+  return v_sql;
+end;
+$f$;
+
+create or replace 
 function bitemporal_internal.select_constraint_value(src text)
 returns  text
 language plpgsql IMMUTABLE

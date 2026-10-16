@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan( 14 );
+SELECT plan( 16 );
 
 select  unialike( current_setting('search_path'), '%bitemporal_internal%'
   ,'bitemporal_internal should NOT be on search_path for these tests' );
@@ -89,6 +89,13 @@ values ( 4::int )
 $$, 'find_constraints');
 
 select has_relation('bitemporal_internal', 'fk_constraint_type', 'table bitemporal_internal.fk_constraint_type exists');
+
+select lives_ok($$
+  create table t_exec (id int);
+  select bitemporal_internal.execute_add_constraint('t_exec', bitemporal_internal.pk_constraint('id'));
+$$, 'execute_add_constraint');
+
+select is(bitemporal_internal.find_pk('t_exec'), 'id', 'find_pk on t_exec after execute_add_constraint');
 
 SELECT * FROM finish();
 ROLLBACK;
